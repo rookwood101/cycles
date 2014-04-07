@@ -19,3 +19,7 @@
 *.exe
 *.out
 *.app
+
+# Sublime Text Files
+*.sublime-project
+*.sublime-workspace
