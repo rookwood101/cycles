@@ -6,6 +6,16 @@
 #include <soci/soci.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 
+class Table {
+private:
+	std::string name;
+	soci::session* sql_session;
+public:
+	Table(soci::session database_sql_session, std::string table_name) {load(database_sql_session, table_name)}
+	int load(soci::session database_sql_session, std::string table_name);
+	soci::rowset<soci::row> getRowsBy(std::string search_field, std::string search value);
+};
+
 
 class Database {
 private:
@@ -19,6 +29,7 @@ public:
 	int load(std::string location);
 
 	std::vector<std::string> getTables();
+	Table getTable(std::string table_name);
 };
 
 
