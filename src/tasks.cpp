@@ -12,17 +12,20 @@ using namespace std;
 using namespace boost;
 
 
-int initialise(ProgramSettings& settings, string database_location) {
-	settings.database_location = database_location;
-	loadDatabase(settings);
-
+int initialise(ProgramSettings& settings, string calendar_database_location, string cache_database_location) {
+	settings.calendars.load(calendar_database_location);
+	settings.cache.load(cache_database_location);
 	return 0;
 }
 
 
 int selectCalendar(ProgramSettings& settings) {
 	vector<string> calendar_options;
-	if (!settings.database.is_empty){
+
+	if(settings.calendars.isLoaded()) {
+		
+	}
+	/*if (!settings.database.is_loaded){
 		for (vector<Calendar>::iterator i = settings.database.calendars.begin(); i != settings.database.calendars.end(); ++i) {
 			calendar_options.push_back(i->name);
 		}
@@ -36,7 +39,7 @@ int selectCalendar(ProgramSettings& settings) {
 		(settings.database.calendars.end() - 1)->name = askOpen("Name new Calendar:");
 	}
 
-	return selected_calendar_option;
+	return selected_calendar_option;*/
 }
 
 
