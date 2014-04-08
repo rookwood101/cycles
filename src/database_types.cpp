@@ -30,6 +30,18 @@ rowset<row> Table::getRowsBy(string search_field, string search_value) {
 	return output;
 }
 
+int Table::insertRow(vector<string> values) { //values in order of field
+	session sql_session(sqlite3, database_location);
+
+	string sql_query = "INSERT INTO " + name + " VALUES ('" + values[0] + "'";
+	for(vector<string>::const_iterator it = values.begin() + 1; it != values.end(); ++it) {
+		sql_query += ", '" + *it + "'";
+	}
+	sql_query += ')';
+	
+	sql_session << sql_query;
+	return 0;
+}
 
 
 
@@ -65,8 +77,7 @@ Table Database::createTable(string table_name, vector<string> table_fields) {
 
 	session sql_session(sqlite3, database_location);
 
-	string sql_query = "CREATE TABLE if not exists " + table_name + " (";
-	sql_query += table_fields[0];
+	string sql_query = "CREATE TABLE if not exists " + table_name + " (" + table_fields[0];
 	for(vector<string>::const_iterator it = table_fields.begin() + 1; it != table_fields.end(); ++it) {
 		sql_query += ", " + *it;
 	}

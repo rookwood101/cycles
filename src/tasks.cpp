@@ -51,6 +51,10 @@ int askRegularity() {
 	return regularity_option_values[regularity_option];
 }
 
+gregorian::date calculateStartDate(ProgramSettings& settings, gregorian::days regularity) {
+	return gregorian::date(gregorian::day_clock::local_day() + gregorian::days(1)); // tomorrow (temporary)
+}
+
 int createNewTask(ProgramSettings& settings) {
 	string task_name = askOpen("Name of Task:");
 	string task_description = askOpen("Description of Task (optional):");
@@ -65,7 +69,7 @@ int createNewTask(ProgramSettings& settings) {
 		start_date = gregorian::date(year, month, day);
 	}
 	else {
-		
+		start_date = calculateStartDate(settings, regularity);
 	}
 
 	return 0;
