@@ -13,6 +13,8 @@ struct ProgramSettings {
 	ProgramSettings(): exit(false) {}
 };
 
-bool string_is_integer(std::string input);
+bool stringIsInteger(std::string input);
+
+std::string integerToString(int input);
 
 #endif

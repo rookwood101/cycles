@@ -6,7 +6,7 @@ using namespace std;
 
 struct ProgramSettings;
 
-bool string_is_integer(std::string input) {
+bool stringIsInteger(std::string input) {
 	bool is_integer = false;
 	try {
 		boost::lexical_cast<int>(input);
@@ -14,4 +14,8 @@ bool string_is_integer(std::string input) {
 	}
 	catch (boost::bad_lexical_cast &){}
 	return is_integer;
+}
+
+string integerToString(int input) {
+	return boost::lexical_cast<string>(input);
 }

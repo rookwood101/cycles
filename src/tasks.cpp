@@ -24,9 +24,6 @@ int initialise(ProgramSettings& settings, string calendar_database_location, str
 string selectCalendar(ProgramSettings& settings) {
 	vector<string> calendar_options;
 
-	if(!settings.calendars.isLoaded()) {
-		throw runtime_error("Database Unintialised");
-	}
 	calendar_options = settings.calendars.getTables();
 	calendar_options.push_back("Create new");
 	unsigned int selected_calendar_option = askList("Select a Calendar or Create a new Calendar:", calendar_options);
@@ -58,19 +55,25 @@ gregorian::date calculateStartDate(ProgramSettings& settings, gregorian::days re
 int createNewTask(ProgramSettings& settings) {
 	string task_name = askOpen("Name of Task:");
 	string task_description = askOpen("Description of Task (optional):");
-	gregorian::days regularity(askRegularity());
+	gregorian::days task_regularity(askRegularity());
+	string task_regularity_sql = integerToString(task_regularity.days());
 
-	gregorian::date start_date;
+	gregorian::date task_start_date;
 	if (askYesNo("Do you want to specify a start date? (Otherwise, the program will calculate one for you)")) {
 		int day = askOpenInt("Day (Numerical):");
 		int month = askOpenInt("Month (Numerical):");
 		int year = askOpenInt("Year:");
 
-		start_date = gregorian::date(year, month, day);
+		task_start_date = gregorian::date(year, month, day);
 	}
 	else {
-		start_date = calculateStartDate(settings, regularity);
+		task_start_date = calculateStartDate(settings, task_regularity);
 	}
+	string task_start_date_sql = "date(" + gregorian::to_iso_extended_string(task_start_date) + ")";
+
+	map<string, string> task_record = assign::map_list_of("name", task_name)("description", task_description)("regularity", task_regularity_sql)("start_date", task_start_date_sql);
+
+	settings.calendars.getTable(settings.calendars.getCurrentCalendar()).insertRow(task_record);
 
 	return 0;
 }
