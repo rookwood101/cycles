@@ -7,18 +7,26 @@
 #include <boost/assign.hpp>
 #include <soci/soci.h>
 #include <soci/sqlite3/soci-sqlite3.h>
+#include "database_types.h"
+#include "interface.h"
 
 using namespace std;
 using namespace soci;
 using namespace boost;
 
-int Table::load(session& database_sql_session, string table_name) {
-	sql_session = &database_sql_session;
+
+int Table::load(string location, string table_name) {
+	database_location = location;
 	name = table_name;
+	return 0;
 }
 
 rowset<row> Table::getRowsBy(string search_field, string search_value) {
-	rowset<row> output = ((*sql_session).prepare << "SELECT * FROM " << name << " WHERE " << search_field << "='" << search_value << "'");
+	session sql_session(sqlite3, database_location);
+
+	rowset<row> output = (sql_session.prepare << "SELECT * FROM " << name << " WHERE " << search_field << "='" << search_value << "'");
+
+	
 	return output;
 }
 
@@ -26,8 +34,7 @@ rowset<row> Table::getRowsBy(string search_field, string search_value) {
 
 
 int Database::load(string location) {
-	location_on_disk = location;
-	sql_session = session(sqlite3, location_on_disk);
+	database_location = location;
 	is_loaded = true;
 	return 0;
 }
@@ -36,9 +43,12 @@ vector<string> Database::getTables() {
 	if(!isLoaded())
 		throw runtime_error("Database Unintialised");
 
+	session sql_session(sqlite3, database_location);
+
 	rowset<string> rs = (sql_session.prepare << "SELECT name FROM sqlite_master WHERE type='table'");
 	vector<string> output;
-	copy(rs.begin(), rs.end(), output.begin());
+	copy(rs.begin(), rs.end(), back_inserter(output));
+
 	return output;
 }
 
@@ -46,28 +56,31 @@ Table Database::getTable(string table_name) {
 	if(!isLoaded())
 		throw runtime_error("Database Unintialised");
 
-	return Table(sql_session, table_name);
+	return Table(database_location, table_name);
 }
 
 Table Database::createTable(string table_name, vector<string> table_fields) {
 	if(!isLoaded())
 		throw runtime_error("Database Unintialised");
 
+	session sql_session(sqlite3, database_location);
+
 	string sql_query = "CREATE TABLE if not exists " + table_name + " (";
-	sql_query << table_fields[0];
+	sql_query += table_fields[0];
 	for(vector<string>::const_iterator it = table_fields.begin() + 1; it != table_fields.end(); ++it) {
-		sql_query << ", " << *it;
+		sql_query += ", " + *it;
 	}
-	sql_query << ")";
+	sql_query += ")";
 
 	sql_session << sql_query;
-	return Table(sql_session, table_name);
+	return Table(database_location, table_name);
 }
 
 
 
 int CalendarDatabase::setCurrentCalendar(std::string new_current_calendar) {
 	current_calendar = new_current_calendar;
+	return 0;
 }
 
 Table CalendarDatabase::createCalendar(string calendar_name) {

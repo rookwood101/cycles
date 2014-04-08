@@ -27,17 +27,13 @@ string selectCalendar(ProgramSettings& settings) {
 	if(!settings.calendars.isLoaded()) {
 		throw runtime_error("Database Unintialised");
 	}
-
 	calendar_options = settings.calendars.getTables();
 	calendar_options.push_back("Create new");
-
-	int selected_calendar_option = askList("Select a Calendar or Create a new Calendar:", calendar_options);
-
+	unsigned int selected_calendar_option = askList("Select a Calendar or Create a new Calendar:", calendar_options);
 	if (selected_calendar_option == calendar_options.size() -1) {
 		settings.calendars.createCalendar(askOpen("Name new Calendar:"));
 		return selectCalendar(settings);
 	}
-
 	return calendar_options[selected_calendar_option];
 }
 
@@ -45,7 +41,7 @@ string selectCalendar(ProgramSettings& settings) {
 int askRegularity() {
 	vector<string> regularity_options = assign::list_of("Daily")("Weekly")("Fortnightly")("Monthly")("Six-monthly")("Yearly")("Custom");
 	vector<int> regularity_option_values = assign::list_of(1)(7)(14)(30)(182)(365)(-1);
-	int regularity_option = askList("Regularity of Task (How often it must be done):", regularity_options);
+	unsigned int regularity_option = askList("Regularity of Task (How often it must be done):", regularity_options);
 
 	if (regularity_option == regularity_options.size() -1) {
 		//custom regularity

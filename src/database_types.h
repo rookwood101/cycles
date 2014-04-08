@@ -10,24 +10,23 @@
 class Table {
 private:
 	std::string name;
-	soci::session* sql_session;
+	std::string database_location;
 public:
-	Table(soci::session database_sql_session, std::string table_name) {load(database_sql_session, table_name)}
+	Table(std::string location, std::string table_name){load(location, table_name);}
 
-	int load(soci::session database_sql_session, std::string table_name);
+	int load(std::string location, std::string table_name);
 
-	soci::rowset<soci::row> getRowsBy(std::string search_field, std::string search value);
+	soci::rowset<soci::row> getRowsBy(std::string search_field, std::string search_value);
 };
 
 
 class Database {
 private:
-	std::string location_on_disk;
+	std::string database_location;
 	bool is_loaded;
-	soci::session sql_session;
 public:
-	Database(): is_loaded(false){}
-	Database(std::string location): is_loaded(false) {load(location);}
+	Database(): database_location(""), is_loaded(false) {}
+	Database(std::string location): database_location(""), is_loaded(false) {load(location);}
 
 	bool isLoaded(){return is_loaded;}
 
@@ -44,13 +43,16 @@ class CalendarDatabase : public Database {
 private:
 	std::string current_calendar;
 public:
-	CalendarDatabase(): current_calendar(""), Database() {}
+	CalendarDatabase(): Database(), current_calendar("") {}
 	int setCurrentCalendar(std::string new_current_calendar);
 	Table createCalendar(std::string calendar_name);
 };
 
 class CacheDatabase : public Database {
+private:
 
+public:
+	CacheDatabase(): Database() {}
 };
 
 

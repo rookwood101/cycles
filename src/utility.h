@@ -7,8 +7,8 @@
 
 struct ProgramSettings {
 	bool exit;
-	Database calendars;
-	Database cache;
+	CalendarDatabase calendars;
+	CacheDatabase cache;
 
 	ProgramSettings(): exit(false) {}
 };
