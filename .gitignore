@@ -23,3 +23,6 @@
 # Sublime Text Files
 *.sublime-project
 *.sublime-workspace
+
+# Test Databases
+*.sql
