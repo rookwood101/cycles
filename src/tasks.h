@@ -6,12 +6,12 @@
 
 int initialise(ProgramSettings& settings, std::string calendar_database_location, std::string cache_database_location);
 
+std::string selectCalendar(ProgramSettings& settings);
+
 int askRegularity();
 int createNewTask(ProgramSettings& settings);
 
 int viewUpcomingTasks(ProgramSettings& settings);
-
-int selectCalendar(ProgramSettings& settings);
 
 int dashboard(ProgramSettings& settings);
 

@@ -66,7 +66,7 @@ Table Database::createTable(string table_name, vector<string> table_fields) {
 
 
 
-int setCurrentCalendar(std::string new_current_calendar) {
+int CalendarDatabase::setCurrentCalendar(std::string new_current_calendar) {
 	current_calendar = new_current_calendar;
 }
 

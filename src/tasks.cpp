@@ -1,11 +1,13 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <stdexcept>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/assign.hpp>
 #include "interface.h"
 #include "tasks.h"
-#include "database.h"
+#include "utility.h"
+#include "database_types.h"
 
 
 using namespace std;
@@ -19,27 +21,24 @@ int initialise(ProgramSettings& settings, string calendar_database_location, str
 }
 
 
-int selectCalendar(ProgramSettings& settings) {
+string selectCalendar(ProgramSettings& settings) {
 	vector<string> calendar_options;
 
-	if(settings.calendars.isLoaded()) {
-		
+	if(!settings.calendars.isLoaded()) {
+		throw runtime_error("Database Unintialised");
 	}
-	/*if (!settings.database.is_loaded){
-		for (vector<Calendar>::iterator i = settings.database.calendars.begin(); i != settings.database.calendars.end(); ++i) {
-			calendar_options.push_back(i->name);
-		}
-	}
+
+	calendar_options = settings.calendars.getTables();
 	calendar_options.push_back("Create new");
-	vector<string>::size_type selected_calendar_option = askList("Select a Calendar or Create a new Calendar:", calendar_options);
 
-	if (selected_calendar_option == calendar_options.size() - 1) {
-		Calendar new_calendar;
-		settings.database.calendars.push_back(new_calendar);
-		(settings.database.calendars.end() - 1)->name = askOpen("Name new Calendar:");
+	int selected_calendar_option = askList("Select a Calendar or Create a new Calendar:", calendar_options);
+
+	if (selected_calendar_option == calendar_options.size() -1) {
+		settings.calendars.createCalendar(askOpen("Name new Calendar:"));
+		return selectCalendar(settings);
 	}
 
-	return selected_calendar_option;*/
+	return calendar_options[selected_calendar_option];
 }
 
 
