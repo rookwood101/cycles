@@ -23,7 +23,6 @@ bool askYesNo(string question) {
 int askList(string question, vector<string> possible_answers) {
 	string answer;
 	int answer_int;
-	bool answer_is_integer;
 	do {
 		answer_int = -1;
 		if (possible_answers.size() > 1)
@@ -37,8 +36,7 @@ int askList(string question, vector<string> possible_answers) {
 		cout << endl;
 		getline(cin, answer);
 		trim(answer);
-		answer_is_integer = string_is_integer(answer);
-		if (answer_is_integer)
+		if (stringIsInteger(answer))
 			answer_int = lexical_cast<int>(answer);
 	} while ( !( answer_int >= 0 && answer_int < static_cast<int>(possible_answers.size()) ) );
 
@@ -59,6 +57,6 @@ string askOpen(string question) {
 
 int askOpenInt(string question) {
 	string answer;
-	while(!string_is_integer(answer = askOpen(question))) { }
+	while(!stringIsInteger(answer = askOpen(question))) { }
 	return lexical_cast<int>(answer);
 }
