@@ -4,11 +4,11 @@
 #include <stdexcept>
 #include <iterator>
 #include <algorithm>
+#include <boost/utility.hpp>
 #include <boost/assign.hpp>
 #include <soci/soci.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 #include "database_types.h"
-#include "interface.h"
 
 using namespace std;
 using namespace soci;
@@ -30,15 +30,18 @@ rowset<row> Table::getRowsBy(string search_field, string search_value) {
 	return output;
 }
 
-int Table::insertRow(vector<string> values) { //values in order of field
+int Table::insertRow(map<string, string> field_to_value) {
 	session sql_session(sqlite3, database_location);
 
-	string sql_query = "INSERT INTO " + name + " VALUES ('" + values[0] + "'";
-	for(vector<string>::const_iterator it = values.begin() + 1; it != values.end(); ++it) {
-		sql_query += ", '" + *it + "'";
+	string sql_query = "INSERT INTO " + name + " (" + field_to_value.begin()->first;
+	for(map<string, string>::const_iterator it = next(field_to_value.begin()); it != field_to_value.end(); ++it) {
+		sql_query += ", " + it->first;
 	}
-	sql_query += ')';
-	
+	sql_query += ") VALUES ('" + field_to_value.begin()->second + "'";
+	for(map<string, string>::const_iterator it = next(field_to_value.begin()); it != field_to_value.end(); ++it) {
+		sql_query += ", '" + it->second + "'";
+	}
+	sql_query += ")";
 	sql_session << sql_query;
 	return 0;
 }
@@ -92,6 +95,10 @@ Table Database::createTable(string table_name, vector<string> table_fields) {
 int CalendarDatabase::setCurrentCalendar(std::string new_current_calendar) {
 	current_calendar = new_current_calendar;
 	return 0;
+}
+
+string CalendarDatabase::getCurrentCalendar() {
+	return current_calendar;
 }
 
 Table CalendarDatabase::createCalendar(string calendar_name) {

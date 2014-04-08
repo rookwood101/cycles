@@ -17,6 +17,7 @@ public:
 	int load(std::string location, std::string table_name);
 
 	soci::rowset<soci::row> getRowsBy(std::string search_field, std::string search_value);
+	int insertRow(std::map<std::string, std::string> field_to_value);
 };
 
 
@@ -45,6 +46,7 @@ private:
 public:
 	CalendarDatabase(): Database(), current_calendar("") {}
 	int setCurrentCalendar(std::string new_current_calendar);
+	std::string getCurrentCalendar();
 	Table createCalendar(std::string calendar_name);
 };
 
