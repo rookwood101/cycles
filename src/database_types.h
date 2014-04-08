@@ -26,8 +26,8 @@ private:
 	bool is_loaded;
 	soci::session sql_session;
 public:
-	Database(): is_loaded(true){}
-	Database(std::string location): is_loaded(true) {load(location);}
+	Database(): is_loaded(false){}
+	Database(std::string location): is_loaded(false) {load(location);}
 
 	bool isLoaded(){return is_loaded;}
 

@@ -28,12 +28,12 @@ rowset<row> Table::getRowsBy(string search_field, string search_value) {
 int Database::load(string location) {
 	location_on_disk = location;
 	sql_session = session(sqlite3, location_on_disk);
-	is_loaded = false;
+	is_loaded = true;
 	return 0;
 }
 
 vector<string> Database::getTables() {
-	if(isLoaded())
+	if(!isLoaded())
 		throw runtime_error("Database Unintialised");
 
 	rowset<string> rs = (sql_session.prepare << "SELECT name FROM sqlite_master WHERE type='table'");
@@ -43,14 +43,14 @@ vector<string> Database::getTables() {
 }
 
 Table Database::getTable(string table_name) {
-	if(isLoaded())
+	if(!isLoaded())
 		throw runtime_error("Database Unintialised");
 
 	return Table(sql_session, table_name);
 }
 
 Table Database::createTable(string table_name, vector<string> table_fields) {
-	if(isLoaded())
+	if(!isLoaded())
 		throw runtime_error("Database Unintialised");
 
 	string sql_query = "CREATE TABLE if not exists " + table_name + " (";
