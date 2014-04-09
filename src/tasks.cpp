@@ -49,7 +49,7 @@ int rebuildCache(ProgramSettings& settings) {
 
 double calculateTaskImportance(gregorian::date occurrence_date, gregorian::days regularity) {
 	gregorian::days days_away = occurrence_date - gregorian::day_clock::local_day()
-	return ( regularity.days() / (days_away.days() * sqrt(regularity.days())) );
+	return ( static_cast<double>(regularity.days()) / (static_cast<double>(days_away.days()) * sqrt(regularity.days())) );
 }
 
 
