@@ -127,6 +127,9 @@ Table CalendarDatabase::createCalendar(string calendar_name) {
 	if(getTable(calendar_name).exists())
 		throw runtime_error("Calendar already exists");
 
+	if(calendar_name[calendar_name.size() - 2] == '_' && calendar_name[calendar_name.size() - 1] == 'c')
+		throw runtime_error("Calendar name reserved for caches");
+
 	vector<string> table_fields = assign::list_of("id INTEGER PRIMARY KEY")("name TEXT")("description TEXT")("regularity INTEGER")("start_date DATE");
 	return createTable(calendar_name, table_fields);
 }
