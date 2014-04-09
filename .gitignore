@@ -27,3 +27,4 @@
 # Test Databases
 *.sql
 *.sql
+src/calendars.sql

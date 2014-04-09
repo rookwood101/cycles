@@ -18,7 +18,11 @@ public:
 
 	bool exists();
 
+	soci::rowset<soci::row> getRows();
 	soci::rowset<soci::row> getRowsBy(std::string search_field, std::string search_value);
+
+	int truncate();
+
 	int insertRow(std::map<std::string, std::string> field_to_value);
 };
 

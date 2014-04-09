@@ -6,6 +6,8 @@
 
 int initialise(ProgramSettings& settings, std::string calendar_database_location);
 
+int rebuildCache(ProgramSettings& settings);
+
 std::string selectCalendar(ProgramSettings& settings);
 
 int askRegularity();

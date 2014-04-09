@@ -7,9 +7,10 @@
 
 struct ProgramSettings {
 	bool exit;
+	int cache_distance_days;
 	CalendarDatabase calendars;
 
-	ProgramSettings(): exit(false) {}
+	ProgramSettings(): exit(false), cache_distance_days(30) {}
 };
 
 bool stringIsInteger(std::string input);

@@ -34,14 +34,32 @@ bool Table::exists() {
 	return exists;
 }
 
+rowset<row> Table::getRows() {
+	session sql_session(sqlite3, database_location);
+	sql_session << "PRAGMA foreign_keys = ON";
+
+	rowset<row> output = (sql_session.prepare << "SELECT * FROM " << name);
+
+	return output;
+}
+
 rowset<row> Table::getRowsBy(string search_field, string search_value) {
 	session sql_session(sqlite3, database_location);
 	sql_session << "PRAGMA foreign_keys = ON";
 
 	rowset<row> output = (sql_session.prepare << "SELECT * FROM " << name << " WHERE " << search_field << "='" << search_value << "'");
 
-	
 	return output;
+}
+
+int Table::truncate() {
+	session sql_session(sql3, database_location);
+	sql_session << "PRAGMA foreign_keys = ON";
+
+	sql_session << "DELETE FROM " << name;
+	sql_session << "VACUUM";
+
+	return 0;
 }
 
 int Table::insertRow(map<string, string> field_to_value) {
@@ -130,7 +148,8 @@ Table CalendarDatabase::createCalendar(string calendar_name) {
 	if(calendar_name[calendar_name.size() - 2] == '_' && calendar_name[calendar_name.size() - 1] == 'c')
 		throw runtime_error("Calendar name reserved for caches");
 
-	vector<string> table_fields = assign::list_of("id INTEGER PRIMARY KEY")("name TEXT")("description TEXT")("regularity INTEGER")("start_date DATE");
+	vector<string> table_fields = assign::list_of("id INTEGER PRIMARY KEY")("name TEXT")("description TEXT")("regularity INTEGER")("start_date CHAR(10)");
+	createCache(calendar_name);
 	return createTable(calendar_name, table_fields);
 }
 
@@ -145,6 +164,6 @@ Table CalendarDatabase::createCache(string calendar_name) {
 		throw runtime_error("Cache for this calendar already created");
 
 	string foreign_key_string = "FOREIGN KEY(task_id) REFERENCES " + calendar_name + "(id)";
-	vector<string> table_fields = assign::list_of("id INTEGER PRIMARY KEY")("date DATE")("task_id INTEGER")(foreign_key_string.c_str());
+	vector<string> table_fields = assign::list_of("id INTEGER PRIMARY KEY")("date CHAR(10)")("task_id INTEGER")(foreign_key_string.c_str());
 	return createTable(calendar_name + "_c", table_fields);
 }

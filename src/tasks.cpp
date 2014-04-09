@@ -2,8 +2,11 @@
 #include <map>
 #include <string>
 #include <stdexcept>
+#include <cmath>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/assign.hpp>
+#include <soci/soci.h>
+#include <soci/sqlite3/soci-sqlite3.h>
 #include "interface.h"
 #include "tasks.h"
 #include "utility.h"
@@ -12,10 +15,34 @@
 
 using namespace std;
 using namespace boost;
+using namespace soci;
 
 
 int initialise(ProgramSettings& settings, string calendar_database_location) {
 	settings.calendars.load(calendar_database_location);
+	return 0;
+}
+
+
+int rebuildCache(ProgramSettings& settings) {
+	rowset<row> current_calendar_tasks = settings.calendars.getTable(settings.calendars.getCurrentCalendar()).getRows();
+
+	Table current_calendar_cache = settings.calendars.getTable(settings.calendars.getCurrentCalendar() + "_c");
+	current_calendar_cache.truncate();
+
+	for(rowset<row>::const_iterator it = current_calendar_tasks.begin(); it != current_calendar_tasks.end(); ++it) {
+		row const& task = *it;
+		int task_id = task.get<int>(0);
+		gregorian::days task_regularity(task.get<int>(3));
+		gregorian::date task_start_date(from_string(task.get<string>(4)));
+		gregorian::date cache_distance = task_start_date + gregorian::days(30);
+		map<string, string> sql_row = assign::map_list_of("task_id", task_id);
+		for(gregorian::date task_occurrence = task_start_date; task_occurrence <= cache_distance; task_occurrence += task_regularity) {
+			sql_row["date"] = gregorian::to_iso_extended_string(task_occurrence);
+			current_calendar_cache.insertRow(sql_row);
+		}
+	}
+
 	return 0;
 }
 
@@ -49,6 +76,7 @@ int askRegularity() {
 
 gregorian::date calculateStartDate(ProgramSettings& settings, gregorian::days regularity) {
 	gregorian::days days_to_look_ahead((log(regularity.days()) / log(1.215)) - 3);
+	rebuildCache(settings);
 
 	return gregorian::date(gregorian::day_clock::local_day() + gregorian::days(1)); // tomorrow (temporary)
 }
@@ -70,12 +98,11 @@ int createNewTask(ProgramSettings& settings) {
 	else {
 		task_start_date = calculateStartDate(settings, task_regularity);
 	}
-	string task_start_date_sql = "date(" + gregorian::to_iso_extended_string(task_start_date) + ")";
 
-	map<string, string> task_record = assign::map_list_of("name", task_name)("description", task_description)("regularity", task_regularity_sql)("start_date", task_start_date_sql);
+	map<string, string> task_record = assign::map_list_of("name", task_name)("description", task_description)("regularity", task_regularity_sql)("start_date", gregorian::to_iso_extended_string(task_start_date));
 
 	settings.calendars.getTable(settings.calendars.getCurrentCalendar()).insertRow(task_record);
-
+	rebuildCache(settings);
 	return 0;
 }
 
