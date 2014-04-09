@@ -47,6 +47,12 @@ int rebuildCache(ProgramSettings& settings) {
 }
 
 
+double calculateTaskImportance(gregorian::date occurrence_date, gregorian::days regularity) {
+	gregorian::days days_away = occurrence_date - gregorian::day_clock::local_day()
+	return ( regularity.days() / (days_away.days() * sqrt(regularity.days())) );
+}
+
+
 string selectCalendar(ProgramSettings& settings) {
 	vector<string> calendar_options;
 
@@ -126,6 +132,10 @@ int createNewTask(ProgramSettings& settings) {
 
 
 int viewUpcomingTasks(ProgramSettings& settings) {
+	rebuildCache(settings);
+
+	
+	
 	return 0;
 }
 
