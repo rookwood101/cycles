@@ -49,6 +49,8 @@ int askRegularity() {
 }
 
 gregorian::date calculateStartDate(ProgramSettings& settings, gregorian::days regularity) {
+	gregorian::days days_to_look_ahead((log(regularity.days()) / log(1.215)) - 3);
+	
 	return gregorian::date(gregorian::day_clock::local_day() + gregorian::days(1)); // tomorrow (temporary)
 }
 
