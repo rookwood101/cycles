@@ -21,7 +21,7 @@ public:
 	soci::rowset<soci::row> getRows();
 	soci::rowset<soci::row> getRowsBy(std::string search_field, std::string search_value);
 
-	int Table::getCountBy(std::string search_field, std::string search_value);
+	int getCountBy(std::string search_field, std::string search_value);
 
 	int truncate();
 
