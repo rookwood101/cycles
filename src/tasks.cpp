@@ -75,10 +75,28 @@ int askRegularity() {
 }
 
 gregorian::date calculateStartDate(ProgramSettings& settings, gregorian::days regularity) {
-	gregorian::days days_to_look_ahead((log(regularity.days()) / log(1.215)) - 3);
+	gregorian::days days_to_look_ahead( round(((log(regularity.days()) / log(1.215)) - 3)) );
+	gregorian::date tomorrow = gregorian::day_clock::local_day() + gregorian::days(1);
+	gregorian::date latest_start_date = today + days_to_look_ahead;
+
+	
+
 	rebuildCache(settings);
 
-	return gregorian::date(gregorian::day_clock::local_day() + gregorian::days(1)); // tomorrow (temporary)
+	int tasks_on_day_before_date = settings.calendars.getTable(settings.calendars.getCurrentCalendar()).getCountBy("date", gregorian::to_iso_extended_string(tomorrow));
+	gregorian::date start_date = tomorrow;
+
+	for(gregorian::date date = tomorrow + gregorian::days(1); date <= latest_start_date; date += gregorian::days(1)) {
+		int tasks_on_date = settings.calendars.getTable(settings.calendars.getCurrentCalendar()).getCountBy("date", gregorian::to_iso_extended_string(date));
+
+		if(tasks_on_date <= tasks_on_day_before_date) {
+			tasks_on_day_before_date = tasks_on_date;
+			start_date = date;
+		}
+
+	}
+
+	return start_date;
 }
 
 int createNewTask(ProgramSettings& settings) {
