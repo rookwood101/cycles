@@ -52,6 +52,17 @@ rowset<row> Table::getRowsBy(string search_field, string search_value) {
 	return output;
 }
 
+int Table::getCountBy(string search_field, string search_value) {
+	session sql_session(sqlite3, database_location);
+	sql_session << "PRAGMA foreign_keys = ON";
+
+	int output;
+
+	sql_session << "SELECT COUNT(*) FROM " << name << " WHERE " << search_field << "='" << search_value << "'", into(output);
+
+	return output;
+}
+
 int Table::truncate() {
 	session sql_session(sql3, database_location);
 	sql_session << "PRAGMA foreign_keys = ON";
