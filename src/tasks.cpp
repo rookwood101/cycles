@@ -14,9 +14,8 @@ using namespace std;
 using namespace boost;
 
 
-int initialise(ProgramSettings& settings, string calendar_database_location, string cache_database_location) {
+int initialise(ProgramSettings& settings, string calendar_database_location) {
 	settings.calendars.load(calendar_database_location);
-	settings.cache.load(cache_database_location);
 	return 0;
 }
 
@@ -50,7 +49,7 @@ int askRegularity() {
 
 gregorian::date calculateStartDate(ProgramSettings& settings, gregorian::days regularity) {
 	gregorian::days days_to_look_ahead((log(regularity.days()) / log(1.215)) - 3);
-	
+
 	return gregorian::date(gregorian::day_clock::local_day() + gregorian::days(1)); // tomorrow (temporary)
 }
 

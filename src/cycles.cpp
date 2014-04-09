@@ -4,7 +4,7 @@
 int main()
 {
 	ProgramSettings program_settings;
-	initialise(program_settings, "calendars.sql", "cache.sql");
+	initialise(program_settings, "calendars.sql");
 
 	program_settings.calendars.setCurrentCalendar(selectCalendar(program_settings));
 	dashboard(program_settings);

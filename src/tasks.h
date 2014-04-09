@@ -4,7 +4,7 @@
 #include "utility.h"
 #include <string>
 
-int initialise(ProgramSettings& settings, std::string calendar_database_location, std::string cache_database_location);
+int initialise(ProgramSettings& settings, std::string calendar_database_location);
 
 std::string selectCalendar(ProgramSettings& settings);
 
