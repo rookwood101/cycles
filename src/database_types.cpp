@@ -64,7 +64,7 @@ int Table::getCountBy(string search_field, string search_value) {
 }
 
 int Table::truncate() {
-	session sql_session(sql3, database_location);
+	session sql_session(sqlite3, database_location);
 	sql_session << "PRAGMA foreign_keys = ON";
 
 	sql_session << "DELETE FROM " << name;
