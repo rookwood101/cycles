@@ -160,8 +160,9 @@ Table CalendarDatabase::createCalendar(string calendar_name) {
 		throw runtime_error("Calendar name reserved for caches");
 
 	vector<string> table_fields = assign::list_of("id INTEGER PRIMARY KEY")("name TEXT")("description TEXT")("regularity INTEGER")("start_date CHAR(10)");
+	Table output = createTable(calendar_name, table_fields);
 	createCache(calendar_name);
-	return createTable(calendar_name, table_fields);
+	return output;
 }
 
 
