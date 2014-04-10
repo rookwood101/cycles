@@ -60,3 +60,15 @@ int askOpenInt(string question) {
 	while(!stringIsInteger(answer = askOpen(question))) { }
 	return lexical_cast<int>(answer);
 }
+
+int tellList(string title, vector<string> list) {
+	cout << title << endl;
+
+	for(vector<string>::const_iterator it = list.begin(); it != list.end(); ++it) {
+		cout << *it << endl;
+	}
+
+	cout << endl;
+
+	return 0;
+}
