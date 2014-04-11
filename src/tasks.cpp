@@ -7,6 +7,7 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/assign.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/lexical_cast.hpp>
 #include <soci/soci.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 #include "interface.h"
@@ -27,23 +28,30 @@ int initialise(ProgramSettings& settings, string calendar_database_location) {
 
 
 int rebuildCache(ProgramSettings& settings) {
-	rowset<row> current_calendar_tasks = settings.calendars.getTable(settings.calendars.getCurrentCalendar()).getRows();
-
+	vector< map<string, string> > current_calendar_tasks = settings.calendars.getTable(settings.calendars.getCurrentCalendar()).getRows();
 	Table current_calendar_cache = settings.calendars.getTable(settings.calendars.getCurrentCalendar() + "_c");
 	current_calendar_cache.truncate();
 
-	for(rowset<row>::const_iterator it = current_calendar_tasks.begin(); it != current_calendar_tasks.end(); ++it) {
-		row const& task = *it;
-		int task_id = task.get<int>(0);
-		gregorian::days task_regularity(task.get<int>(3));
-		gregorian::date task_start_date(gregorian::from_string(task.get<string>(4)));
-		gregorian::date cache_distance = task_start_date + gregorian::days(30);
-		map<string, string> sql_row = assign::map_list_of("task_id", integerToString(task_id).c_str());
-		for(gregorian::date task_occurrence = task_start_date; task_occurrence <= cache_distance; task_occurrence += task_regularity) {
+	vector<int> task_ids;
+	vector<gregorian::days> task_regularities;
+	vector<gregorian::date> task_start_dates;
+	vector<gregorian::date> cache_distances;
+
+	for(vector< map<string, string> >::iterator it = current_calendar_tasks.begin(); it != current_calendar_tasks.end(); ++it) {
+		task_ids.push_back( boost::lexical_cast<int>((*it)["id"]) );
+		task_regularities.push_back( gregorian::days( boost::lexical_cast<int>((*it)["regularity"]) ) );
+		task_start_dates.push_back(gregorian::from_string((*it)["start_date"]));
+		cache_distances.push_back(gregorian::from_string((*it)["start_date"]) + gregorian::days(30));
+	}
+	
+	for(vector<int>::size_type i = 0; i < task_ids.size(); ++i) {
+		map<string, string> sql_row = assign::map_list_of("task_id", integerToString(task_ids[i]).c_str());
+		for(gregorian::date task_occurrence = task_start_dates[i]; task_occurrence <= cache_distances[i]; task_occurrence += task_regularities[i]) {
 			sql_row["date"] = gregorian::to_iso_extended_string(task_occurrence);
 			current_calendar_cache.insertRow(sql_row);
 		}
 	}
+	
 
 	return 0;
 }
@@ -53,6 +61,12 @@ string selectCalendar(ProgramSettings& settings) {
 	vector<string> calendar_options;
 
 	calendar_options = settings.calendars.getTables();
+
+	for(vector<string>::iterator it = calendar_options.begin(); it != calendar_options.end(); ++it) {
+		if (*((*it).end()-2) == '_')
+			it = calendar_options.erase(it) - 1;
+	}
+
 	calendar_options.push_back("Create new");
 	unsigned int selected_calendar_option = askList("Select a Calendar or Create a new Calendar:", calendar_options);
 	if (selected_calendar_option == calendar_options.size() -1) {
@@ -81,15 +95,12 @@ gregorian::date calculateStartDate(ProgramSettings& settings, gregorian::days re
 	gregorian::date tomorrow = gregorian::day_clock::local_day() + gregorian::days(1);
 	gregorian::date latest_start_date = gregorian::day_clock::local_day() + days_to_look_ahead;
 
-	
 
-	rebuildCache(settings);
-
-	int tasks_on_day_before_date = settings.calendars.getTable(settings.calendars.getCurrentCalendar()).getCountBy("date", gregorian::to_iso_extended_string(tomorrow));
+	int tasks_on_day_before_date = settings.calendars.getTable(settings.calendars.getCurrentCalendar() + "_c").getCountBy("date", gregorian::to_iso_extended_string(tomorrow));
 	gregorian::date start_date = tomorrow;
 
 	for(gregorian::date date = tomorrow + gregorian::days(1); date <= latest_start_date; date += gregorian::days(1)) {
-		int tasks_on_date = settings.calendars.getTable(settings.calendars.getCurrentCalendar()).getCountBy("date", gregorian::to_iso_extended_string(date));
+		int tasks_on_date = settings.calendars.getTable(settings.calendars.getCurrentCalendar() + "_c").getCountBy("date", gregorian::to_iso_extended_string(date));
 
 		if(tasks_on_date <= tasks_on_day_before_date) {
 			tasks_on_day_before_date = tasks_on_date;
@@ -97,7 +108,6 @@ gregorian::date calculateStartDate(ProgramSettings& settings, gregorian::days re
 		}
 
 	}
-
 	return start_date;
 }
 
@@ -118,10 +128,10 @@ int createNewTask(ProgramSettings& settings) {
 	else {
 		task_start_date = calculateStartDate(settings, task_regularity);
 	}
-
 	map<string, string> task_record = assign::map_list_of("name", task_name)("description", task_description)("regularity", task_regularity_sql)("start_date", gregorian::to_iso_extended_string(task_start_date));
-
-	settings.calendars.getTable(settings.calendars.getCurrentCalendar()).insertRow(task_record);
+	Table current_calendar = settings.calendars.getTable(settings.calendars.getCurrentCalendar());
+	current_calendar.insertRow(task_record);
+	
 	rebuildCache(settings);
 	return 0;
 }
@@ -134,8 +144,8 @@ double calculateTaskImportance(gregorian::date occurrence_date, gregorian::days 
 
 
 double calculateTaskImportance(ProgramSettings& settings, int task_id, gregorian::date occurrence_date) {
-	rowset<row> rs = settings.calendars.getTable(settings.calendars.getCurrentCalendar()).getRowsBy("id", integerToString(task_id));
-	gregorian::days task_regularity(( *( rs.begin() ) ).get<int>(3));
+	vector< map<string, string> > fields_to_values = settings.calendars.getTable(settings.calendars.getCurrentCalendar()).getRowsBy("id", integerToString(task_id));
+	gregorian::days task_regularity( lexical_cast<int>(fields_to_values[0]["regularity"]) );
 	return calculateTaskImportance(occurrence_date, task_regularity);
 }
 
@@ -164,10 +174,10 @@ vector<string> createOrderedHumanReadableTaskEntries(ProgramSettings& settings, 
 	for(multimap<double, pair<int, gregorian::date> >::iterator it = importance_to_id_date.begin(); it != importance_to_id_date.end(); ++it) {
 		int task_id = it->second.first;
 
-		rowset<row> rs = settings.calendars.getTable(settings.calendars.getCurrentCalendar()).getRowsBy("id", integerToString(task_id));
+		vector< map<string, string> > fields_to_values = settings.calendars.getTable(settings.calendars.getCurrentCalendar()).getRowsBy("id", integerToString(task_id));
 
-		string task_name = ( *( rs.begin() ) ).get<string>(1);
-		string task_description = ( *( rs.begin() ) ).get<string>(2);
+		string task_name = fields_to_values[0]["name"];
+		string task_description = fields_to_values[0]["description"];
 		string task_date = prettifyDate(it->second.second);
 		string task_entry = task_name;
 		if (task_description != "")
@@ -183,12 +193,10 @@ vector<string> createOrderedHumanReadableTaskEntries(ProgramSettings& settings, 
 int viewUpcomingTasks(ProgramSettings& settings) {
 	rebuildCache(settings);
 	multimap<double, pair<int, gregorian::date> > todays_tasks_importance_to_id, other_task_importance_to_id;
-	rowset<row> task_occurrences = settings.calendars.getTable(settings.calendars.getCurrentCalendar() + "_c").getRows();
-	for(rowset<row>::const_iterator it = task_occurrences.begin(); it != task_occurrences.end(); ++it) {
-		row const& task_occurrence = *it;
-
-		gregorian::date task_occurrence_date( gregorian::from_string(task_occurrence.get<string>(1)) );
-		int task_id = task_occurrence.get<int>(2);
+	vector< map<string, string> > task_occurrences = settings.calendars.getTable(settings.calendars.getCurrentCalendar() + "_c").getRows();
+	for(vector< map<string, string> >::iterator it = task_occurrences.begin(); it != task_occurrences.end(); ++it) {
+		gregorian::date task_occurrence_date( gregorian::from_string((*it)["date"]) );
+		int task_id = lexical_cast<int>((*it)["task_id"]);
 
 		if(task_occurrence_date == gregorian::day_clock::local_day()) {
 			todays_tasks_importance_to_id.insert(pair<double, pair<int, gregorian::date> >(calculateTaskImportance(settings, task_id, task_occurrence_date), pair<int, gregorian::date>(task_id, task_occurrence_date)));

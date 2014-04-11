@@ -1,11 +1,13 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <sstream>
 #include <stdexcept>
 #include <iterator>
 #include <algorithm>
 #include <boost/utility.hpp>
 #include <boost/assign.hpp>
+#include <boost/lexical_cast.hpp>
 #include <soci/soci.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 #include "database_types.h"
@@ -33,23 +35,78 @@ bool Table::exists() {
 
 	return exists;
 }
-
-rowset<row> Table::getRows() {
+vector< map<string, string> > Table::getRows() {
 	session sql_session(sqlite3, database_location);
 	sql_session << "PRAGMA foreign_keys = ON";
 
-	rowset<row> output = (sql_session.prepare << "SELECT * FROM " << name);
+	rowset<row> rs = (sql_session.prepare << "SELECT * FROM " << name);
 
-	return output;
+	vector< map<string, string> > output_field_to_value;
+
+	for(rowset<row>::const_iterator it = rs.begin(); it != rs.end(); ++it) {
+		map<string, string> field_to_value;	
+		row const& r = *it;
+
+		for(map<string, string>::size_type i = 0; i < r.size(); ++i) {
+			const column_properties & props = r.get_properties(i);
+			switch(props.get_data_type()) {
+				case dt_string:
+					field_to_value[props.get_name()] = r.get<std::string>(i);
+					break;
+				case dt_double:
+					field_to_value[props.get_name()] = boost::lexical_cast<string>(r.get<double>(i));
+					break;
+				case dt_integer:
+					field_to_value[props.get_name()] = boost::lexical_cast<string>(r.get<int>(i));
+					break;
+				case dt_long_long:
+				case dt_unsigned_long_long:
+				case dt_date:
+					break;
+			}
+		}
+
+		output_field_to_value.push_back(field_to_value);
+	}
+	sql_session.close();
+	return output_field_to_value;
 }
 
-rowset<row> Table::getRowsBy(string search_field, string search_value) {
+vector< map<string, string> > Table::getRowsBy(string search_field, string search_value) {
 	session sql_session(sqlite3, database_location);
 	sql_session << "PRAGMA foreign_keys = ON";
 
-	rowset<row> output = (sql_session.prepare << "SELECT * FROM " << name << " WHERE " << search_field << "='" << search_value << "'");
+	rowset<row> rs = (sql_session.prepare << "SELECT * FROM " << name << " WHERE " << search_field << "='" << search_value << "'");
 
-	return output;
+	vector< map<string, string> > output_field_to_value;
+
+	for(rowset<row>::const_iterator it = rs.begin(); it != rs.end(); ++it) {
+		map<string, string> field_to_value;	
+		row const& r = *it;
+
+		for(map<string, string>::size_type i = 0; i < r.size(); ++i) {
+			const column_properties & props = r.get_properties(i);
+			switch(props.get_data_type()) {
+				case dt_string:
+					field_to_value[props.get_name()] = r.get<std::string>(i);
+					break;
+				case dt_double:
+					field_to_value[props.get_name()] = boost::lexical_cast<string>(r.get<double>(i));
+					break;
+				case dt_integer:
+					field_to_value[props.get_name()] = boost::lexical_cast<string>(r.get<int>(i));
+					break;
+				case dt_long_long:
+				case dt_unsigned_long_long:
+				case dt_date:
+					break;
+			}
+		}
+
+		output_field_to_value.push_back(field_to_value);
+	}
+	sql_session.close();
+	return output_field_to_value;
 }
 
 int Table::getCountBy(string search_field, string search_value) {
@@ -70,6 +127,7 @@ int Table::truncate() {
 	sql_session << "DELETE FROM " << name;
 	sql_session << "VACUUM";
 
+	sql_session.close();
 	return 0;
 }
 
@@ -88,8 +146,11 @@ int Table::insertRow(map<string, string> field_to_value) {
 	sql_query += ");";
 	sql_session << sql_query;
 
-	int primary_key;
+	int primary_key = 0;
+	//probably breaking here
 	sql_session << "SELECT last_insert_rowid()", into(primary_key);
+
+	sql_session.close();
 	return primary_key;
 }
 
@@ -156,8 +217,8 @@ Table CalendarDatabase::createCalendar(string calendar_name) {
 	if(getTable(calendar_name).exists())
 		throw runtime_error("Calendar already exists");
 
-	if(calendar_name[calendar_name.size() - 2] == '_' && calendar_name[calendar_name.size() - 1] == 'c')
-		throw runtime_error("Calendar name reserved for caches");
+	if(calendar_name[calendar_name.size() - 2] == '_')
+		throw runtime_error("Calendar name reserved");
 
 	vector<string> table_fields = assign::list_of("id INTEGER PRIMARY KEY")("name TEXT")("description TEXT")("regularity INTEGER")("start_date CHAR(10)");
 	Table output = createTable(calendar_name, table_fields);

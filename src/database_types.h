@@ -17,9 +17,8 @@ public:
 	int load(std::string location, std::string table_name);
 
 	bool exists();
-
-	soci::rowset<soci::row> getRows();
-	soci::rowset<soci::row> getRowsBy(std::string search_field, std::string search_value);
+	std::vector< std::map<std::string, std::string> > getRows();
+	std::vector< std::map<std::string, std::string> > getRowsBy(std::string search_field, std::string search_value);
 
 	int getCountBy(std::string search_field, std::string search_value);
 
