@@ -32,26 +32,22 @@ int rebuildCache(ProgramSettings& settings) {
 	Table current_calendar_cache = settings.calendars.getTable(settings.calendars.getCurrentCalendar() + "_c");
 	current_calendar_cache.truncate();
 
-	vector<int> task_ids;
-	vector<gregorian::days> task_regularities;
-	vector<gregorian::date> task_start_dates;
-	vector<gregorian::date> cache_distances;
-
 	for(vector< map<string, string> >::iterator it = current_calendar_tasks.begin(); it != current_calendar_tasks.end(); ++it) {
-		task_ids.push_back( boost::lexical_cast<int>((*it)["id"]) );
-		task_regularities.push_back( gregorian::days( boost::lexical_cast<int>((*it)["regularity"]) ) );
-		task_start_dates.push_back(gregorian::from_string((*it)["start_date"]));
-		cache_distances.push_back(gregorian::from_string((*it)["start_date"]) + gregorian::days(30));
-	}
-	
-	for(vector<int>::size_type i = 0; i < task_ids.size(); ++i) {
-		map<string, string> sql_row = assign::map_list_of("task_id", integerToString(task_ids[i]).c_str());
-		for(gregorian::date task_occurrence = task_start_dates[i]; task_occurrence <= cache_distances[i]; task_occurrence += task_regularities[i]) {
-			sql_row["date"] = gregorian::to_iso_extended_string(task_occurrence);
-			current_calendar_cache.insertRow(sql_row);
+		gregorian::date task_start_date = gregorian::from_string((*it)["start_date"]);
+		gregorian::days task_regularity( lexical_cast<int>((*it)["regularity"]) );
+		map<string, string> sql_row = assign::map_list_of("task_id", (*it)["id"].c_str());
+		gregorian::date task_occurrence_date = task_start_date;
+		int occurrences_in_cache = 0;
+		while((task_occurrence_date <= gregorian::day_clock::local_day() + gregorian::days(settings.cache_distance_days)) && occurrences_in_cache < 2) {
+			
+			if(task_occurrence_date >= gregorian::day_clock::local_day()) {
+				sql_row["date"] = gregorian::to_iso_extended_string(task_occurrence_date);
+				++occurrences_in_cache;
+				current_calendar_cache.insertRow(sql_row);
+			}
+			task_occurrence_date += task_regularity;
 		}
 	}
-	
 
 	return 0;
 }
