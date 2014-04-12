@@ -208,6 +208,9 @@ int viewUpcomingTasks(ProgramSettings& settings) {
 	reverse(todays_ordered_task_entries.begin(), todays_ordered_task_entries.end());
 	reverse(other_ordered_task_entries.begin(), other_ordered_task_entries.end());
 
+	if (other_ordered_task_entries.size() > settings.max_tasks_other)
+		other_ordered_task_entries.resize(settings.max_tasks_other);
+
 	tellList("[Today]", todays_ordered_task_entries);
 	tellList("[Upcoming]", other_ordered_task_entries);
 	
