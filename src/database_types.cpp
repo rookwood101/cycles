@@ -1,16 +1,18 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <sstream>
+#include <iostream>
 #include <stdexcept>
 #include <iterator>
 #include <algorithm>
 #include <boost/utility.hpp>
 #include <boost/assign.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 #include <soci/soci.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 #include "database_types.h"
+#include "interface.h"
 
 using namespace std;
 using namespace soci;
@@ -19,13 +21,14 @@ using namespace boost;
 
 int Table::load(string location, string table_name) {
 	database_location = location;
+	algorithm::to_lower(table_name);
 	name = table_name;
 	return 0;
 }
 
 bool Table::exists() {
 	session sql_session(sqlite3, database_location);
-	sql_session << "PRAGMA foreign_keys = ON";
+	sql_session << "PRAGMA foreign_keys = ON;";
 
 	int exists;
 
@@ -33,11 +36,13 @@ bool Table::exists() {
 
 	sql_session << sql_query, into(exists);
 
+	cout << exists << endl;
+
 	return exists;
 }
 vector< map<string, string> > Table::getRows() {
 	session sql_session(sqlite3, database_location);
-	sql_session << "PRAGMA foreign_keys = ON";
+	sql_session << "PRAGMA foreign_keys = ON;";
 
 	rowset<row> rs = (sql_session.prepare << "SELECT * FROM " << name);
 
@@ -74,7 +79,7 @@ vector< map<string, string> > Table::getRows() {
 
 vector< map<string, string> > Table::getRowsBy(string search_field, string search_value) {
 	session sql_session(sqlite3, database_location);
-	sql_session << "PRAGMA foreign_keys = ON";
+	sql_session << "PRAGMA foreign_keys = ON;";
 
 	rowset<row> rs = (sql_session.prepare << "SELECT * FROM " << name << " WHERE " << search_field << "='" << search_value << "'");
 
@@ -111,7 +116,7 @@ vector< map<string, string> > Table::getRowsBy(string search_field, string searc
 
 int Table::getCountBy(string search_field, string search_value) {
 	session sql_session(sqlite3, database_location);
-	sql_session << "PRAGMA foreign_keys = ON";
+	sql_session << "PRAGMA foreign_keys = ON;";
 
 	int output;
 
@@ -122,7 +127,7 @@ int Table::getCountBy(string search_field, string search_value) {
 
 int Table::truncate() {
 	session sql_session(sqlite3, database_location);
-	sql_session << "PRAGMA foreign_keys = ON";
+	sql_session << "PRAGMA foreign_keys = ON;";
 
 	sql_session << "DELETE FROM " << name;
 	sql_session << "VACUUM";
@@ -133,7 +138,7 @@ int Table::truncate() {
 
 int Table::insertRow(map<string, string> field_to_value) {
 	session sql_session(sqlite3, database_location);
-	sql_session << "PRAGMA foreign_keys = ON";
+	sql_session << "PRAGMA foreign_keys = ON;";
 
 	string sql_query = "INSERT INTO " + name + " (" + field_to_value.begin()->first;
 	for(map<string, string>::const_iterator it = next(field_to_value.begin()); it != field_to_value.end(); ++it) {
@@ -167,7 +172,7 @@ vector<string> Database::getTables() {
 		throw runtime_error("Database Unintialised");
 
 	session sql_session(sqlite3, database_location);
-	sql_session << "PRAGMA foreign_keys = ON";
+	sql_session << "PRAGMA foreign_keys = ON;";
 
 	rowset<string> rs = (sql_session.prepare << "SELECT name FROM sqlite_master WHERE type='table'");
 	vector<string> output;
@@ -184,11 +189,16 @@ Table Database::getTable(string table_name) {
 }
 
 Table Database::createTable(string table_name, vector<string> table_fields) {
+	algorithm::to_lower(table_name);
+
 	if(!isLoaded())
 		throw runtime_error("Database Unintialised");
 
+	if(getTable(table_name).exists())
+		throw runtime_error("Calendar already exists");
+
 	session sql_session(sqlite3, database_location);
-	sql_session << "PRAGMA foreign_keys = ON";
+	sql_session << "PRAGMA foreign_keys = ON;";
 
 	string sql_query = "CREATE TABLE if not exists " + table_name + " (" + table_fields[0];
 	for(vector<string>::const_iterator it = table_fields.begin() + 1; it != table_fields.end(); ++it) {
