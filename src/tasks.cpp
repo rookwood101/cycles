@@ -39,6 +39,13 @@ int rebuildCache(ProgramSettings& settings) {
 		map<string, string> sql_row = assign::map_list_of("task_id", (*it)["id"].c_str());
 		gregorian::date task_occurrence_date = task_start_date;
 		int occurrences_in_cache = 0;
+
+		if (task_regularity == gregorian::days(0)) {
+			if (task_occurrence_date >= gregorian::day_clock::local_day() && (task_occurrence_date <= gregorian::day_clock::local_day() + gregorian::days(settings.cache_distance_days)))
+				sql_row["date"] = gregorian::to_iso_extended_string(task_occurrence_date);
+			continue;
+		}
+
 		while((task_occurrence_date <= gregorian::day_clock::local_day() + gregorian::days(settings.cache_distance_days)) && occurrences_in_cache < 2) {
 			
 			if(task_occurrence_date >= gregorian::day_clock::local_day()) {
@@ -75,8 +82,8 @@ string selectCalendar(ProgramSettings& settings) {
 
 
 int askRegularity() {
-	vector<string> regularity_options = assign::list_of("Daily")("Weekly")("Fortnightly")("Monthly")("Six-monthly")("Yearly")("Custom");
-	vector<int> regularity_option_values = assign::list_of(1)(7)(14)(30)(182)(365)(-1);
+	vector<string> regularity_options = assign::list_of("Once")("Daily")("Weekly")("Fortnightly")("Monthly")("Six-monthly")("Yearly")("Custom");
+	vector<int> regularity_option_values = assign::list_of(0)(1)(7)(14)(30)(182)(365)(-1);
 	unsigned int regularity_option = askList("Regularity of Task (How often it must be done):", regularity_options);
 
 	if (regularity_option == regularity_options.size() -1) {
