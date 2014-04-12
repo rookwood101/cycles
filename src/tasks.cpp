@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <cmath>
 #include <utility>
+#include <algorithm>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/assign.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -204,7 +205,9 @@ int viewUpcomingTasks(ProgramSettings& settings) {
 
 	vector<string> todays_ordered_task_entries = createOrderedHumanReadableTaskEntries(settings, todays_tasks_importance_to_id, false);
 	vector<string> other_ordered_task_entries = createOrderedHumanReadableTaskEntries(settings, other_task_importance_to_id, true);
-	
+	reverse(todays_ordered_task_entries.begin(), todays_ordered_task_entries.end());
+	reverse(other_ordered_task_entries.begin(), other_ordered_task_entries.end());
+
 	tellList("[Today]", todays_ordered_task_entries);
 	tellList("[Upcoming]", other_ordered_task_entries);
 	
