@@ -31,12 +31,7 @@ bool Table::exists() {
 	sql_session << "PRAGMA foreign_keys = ON;";
 
 	int exists;
-
-	string sql_query = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='" + name + "'";
-
-	sql_session << sql_query, into(exists);
-
-	cout << exists << endl;
+	sql_session << "SELECT count(*) FROM sqlite_master WHERE type='table' AND name=':name';", use(name), into(exists);
 
 	return exists;
 }
@@ -44,7 +39,7 @@ vector< map<string, string> > Table::getRows() {
 	session sql_session(sqlite3, database_location);
 	sql_session << "PRAGMA foreign_keys = ON;";
 
-	rowset<row> rs = (sql_session.prepare << "SELECT * FROM " << name);
+	rowset<row> rs = (sql_session.prepare << "SELECT * FROM :name", use(name));
 
 	vector< map<string, string> > output_field_to_value;
 
@@ -81,7 +76,7 @@ vector< map<string, string> > Table::getRowsBy(string search_field, string searc
 	session sql_session(sqlite3, database_location);
 	sql_session << "PRAGMA foreign_keys = ON;";
 
-	rowset<row> rs = (sql_session.prepare << "SELECT * FROM " << name << " WHERE " << search_field << "='" << search_value << "'");
+	rowset<row> rs = (sql_session.prepare << "SELECT * FROM :name WHERE :searchfield=':searchvalue'", use(name), use(search_field), use(search_value));
 
 	vector< map<string, string> > output_field_to_value;
 
@@ -120,7 +115,7 @@ int Table::getCountBy(string search_field, string search_value) {
 
 	int output;
 
-	sql_session << "SELECT COUNT(*) FROM " << name << " WHERE " << search_field << "='" << search_value << "'", into(output);
+	sql_session << "SELECT COUNT(*) FROM :name WHERE :searchfield=':searchvalue'", use(name), use(searchfield), use(searchvalue), into(output);
 
 	return output;
 }
@@ -129,7 +124,7 @@ int Table::truncate() {
 	session sql_session(sqlite3, database_location);
 	sql_session << "PRAGMA foreign_keys = ON;";
 
-	sql_session << "DELETE FROM " << name;
+	sql_session << "DELETE FROM :name;", use(name);
 	sql_session << "VACUUM";
 
 	sql_session.close();
@@ -152,8 +147,8 @@ int Table::insertRow(map<string, string> field_to_value) {
 	sql_session << sql_query;
 
 	int primary_key = 0;
-	//probably breaking here
-	sql_session << "SELECT last_insert_rowid()", into(primary_key);
+
+	sql_session << "SELECT last_insert_rowid();", into(primary_key);
 
 	sql_session.close();
 	return primary_key;
@@ -200,13 +195,13 @@ Table Database::createTable(string table_name, vector<string> table_fields) {
 	session sql_session(sqlite3, database_location);
 	sql_session << "PRAGMA foreign_keys = ON;";
 
-	string sql_query = "CREATE TABLE if not exists " + table_name + " (" + table_fields[0];
+	string sql_query = "CREATE TABLE if not exists :tablename (" + table_fields[0];
 	for(vector<string>::const_iterator it = table_fields.begin() + 1; it != table_fields.end(); ++it) {
 		sql_query += ", " + *it;
 	}
 	sql_query += ")";
 
-	sql_session << sql_query;
+	sql_session << sql_query, use(table_name);
 	return Table(database_location, table_name);
 }
 
