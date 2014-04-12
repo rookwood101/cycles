@@ -43,6 +43,7 @@ int rebuildCache(ProgramSettings& settings) {
 		if (task_regularity == gregorian::days(0)) {
 			if (task_occurrence_date >= gregorian::day_clock::local_day() && (task_occurrence_date <= gregorian::day_clock::local_day() + gregorian::days(settings.cache_distance_days)))
 				sql_row["date"] = gregorian::to_iso_extended_string(task_occurrence_date);
+				current_calendar_cache.insertRow(sql_row);
 			continue;
 		}
 
