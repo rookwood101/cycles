@@ -147,7 +147,7 @@ double calculateTaskImportance(ProgramSettings& settings, int task_id, gregorian
 
 string prettifyDate(gregorian::date date) {
 	int offset = (date - gregorian::day_clock::local_day()).days();
-	static vector<tuple<int, string, int> > positive_offset_name_divisor = assign::list_of(tuple<int, string, int>(0, "today", 0))(tuple<int, string, int>(1, "tomorrow", 0))(tuple<int, string, int>(2, " days", 1))(tuple<int, string, int>(7, " weeks", 7))(tuple<int, string, int>(30, " months", 30));
+	static vector<tuple<int, string, int> > positive_offset_name_divisor = assign::list_of(tuple<int, string, int>(0, "today", 0))(tuple<int, string, int>(1, "tomorrow", 0))(tuple<int, string, int>(2, " days", 1))(tuple<int, string, int>(7, " week", 7))(tuple<int, string, int>(14, " weeks", 7))(tuple<int, string, int>(30, " month", 30))(tuple<int, string, int>(60, " months", 30));
 	string output = "";
 
 	tuple<int, string, int> *prettify_rule = &*(positive_offset_name_divisor.begin());
@@ -157,7 +157,7 @@ string prettifyDate(gregorian::date date) {
 	}
 
 	if (prettify_rule->get<2>() != 0) {
-		output += integerToString(offset);
+		output += "in " + integerToString(floor(offset / prettify_rule->get<2>()));
 	}
 	output += prettify_rule->get<1>();
 
